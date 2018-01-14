@@ -1,0 +1,26 @@
+#
+# Pinned requirements for the build and development of this project.
+#
+
+# Pinned pip requirement specifications matching the setup.cfg ``tests_require`` stanza
+
+coverage==4.1
+mock==2.0.0
+pytest==3.0.4
+pytest-cov==2.3.1
+
+# Pinned pip requirement specifications for setting up the runtime environment
+# for various setup.py commands to be executed in successfully.
+# Should contain a superset of the requirements described in the ``setup_requires`` stanza in setup.cfg
+
+pylint==1.6.4
+pytest-runner==2.9
+setuptools==28.8.0
+sphinx==1.4.8
+sphinx_rtd_theme==0.1.8
+wheel==0.29
+yapf==0.13.2
+
+# Install-time requirements as stipulated in the setup.cfg  ``install_requires`` stanza
+
+-r requirements.txt

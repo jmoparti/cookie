@@ -1,0 +1,14 @@
+{
+    "project_flavor": ["bare_bones", "library", "cli_app", "flask_app"],
+    "python_version_mode": ["py27_only", "py3_only", "py27_thru_py3"],
+    "dependency_management_mode": ["managed_in_house", "public_third_parties"],
+    "package_name": "sysops-boilerplate",
+    "root_module_name": "so_boilerplate",
+    "package_version": "0.1.0",
+    "project_name": "SysOps Boilerplate",
+    "project_short_description": "Boilerplate Python project using SysOps conventions",
+    "author_name": "SysOps Team",
+    "author_email": "sysops@verizondigitalmedia.com",
+    "company_name": "EdgeCast/VDMS",
+    "copyright_year": "2017"
+}

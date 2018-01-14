@@ -1,0 +1,48 @@
+---
+
+#
+# This playbook is intended for use in provisioning the OpenStack Alpha Cluster VM
+# stood up by the included terraform config.
+#
+
+- hosts: '*'
+  vars:
+    remote_user_name: "ubuntu"
+  tasks:
+    - name: Ping the VM
+      ping:
+    - name: Install basic tools
+      become: true
+      apt:
+        name:
+          - git
+          - tree
+    - name: Piggy-back on the python setup script from template itself
+      script: "../../{{'{{'}}cookiecutter.package_name{{'}}'}}/vagrant/install-basic-python.sh args:py27,py34,py35"
+      become: true
+    - name: Install tox via pip to system (dirty I know, but ok for this sandbox)
+      pip:
+        name: tox
+        version: "2.6.0"
+        state: forcereinstall
+      become: true
+    - name: Setup a tmpfs filesystem to speed testing
+      become: true
+      mount:
+        name: /opt/ramdisk
+        src: tmpfs
+        fstype: tmpfs
+        opts: "size=8000m"
+        state: mounted
+    - name: Make the a cleanroom directory in the tmpfs filesystem
+      become: true
+      file:
+        path: "/opt/ramdisk/cleanroom"
+        state: directory
+        recurse: yes
+        owner: "{{remote_user_name}}"
+    - name: Make the destination directory for the transfer of "src" files to cleanroom directory on sandbox VM
+      file:
+        src: "/opt/ramdisk/cleanroom"
+        dest: "/home/{{ remote_user_name }}/cleanroom"
+        state: link

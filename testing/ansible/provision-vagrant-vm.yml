@@ -1,0 +1,33 @@
+---
+
+#
+# This playbook is for provisioning the "system" test VM in the included
+# Vagrant environment.  Please see the Vagrantfile for details on how
+# this gets invoked.
+
+- hosts: 'trusty_sandbox'
+  vars:
+    remote_user_name: "vagrant"
+  tasks:
+    - name: Ping the VM
+      ping:
+    - name: Install basic tools
+      become: true
+      apt:
+        name:
+          - git
+          - tree
+        update_cache: yes
+    - name: Piggy-back on the python setup script from template itself
+      script: "../../{{'{{'}}cookiecutter.package_name{{'}}'}}/vagrant/install-basic-python.sh args:py27,py34,py35"
+      become: true
+    - name: Install tox via pip to system (dirty I know, but ok for this sandbox)
+      pip:
+        name: tox
+        version: "2.6.0"
+        state: forcereinstall
+      become: true
+    - name: Make the destination directory for the transfer of "src" files to cleanroom directory on sandbox VM
+      file:
+        path: "/home/{{ remote_user_name }}/cleanroom/src"
+        state: directory

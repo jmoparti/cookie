@@ -1,0 +1,8 @@
+# Pinned pip requirement specifications matching the setup.cfg ``install_requires`` stanza
+
+# This library is built into Python 3.x core, but you have to ask for it explicitly in Python 2.7
+enum34==1.1.6 ; python_version < '3.0'
+
+{%- if cookiecutter.project_flavor == 'flask_app' %}
+Flask==0.11.1
+{%- endif %}

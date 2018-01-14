@@ -1,0 +1,20 @@
+---
+
+#
+# WARNING:
+# This playbook assumes whatever box you point this at is supposed to be a dev sandbox
+# this allows us to reuse this playbook across vagrant/openstack etc.
+#
+
+- hosts: '*'
+  vars:
+    remote_user_name: "vagrant"
+  tasks:
+    - name: test connection
+      ping:
+    - name: Transfer "output" files from sandbox VM to a local directory
+      synchronize:
+        dest: "../output/"
+        src: "/home/{{ remote_user_name }}/cleanroom/src/testing/output/*"
+        mode: pull
+        recursive: true

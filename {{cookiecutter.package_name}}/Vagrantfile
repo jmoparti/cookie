@@ -1,0 +1,121 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+    #
+    # Set the available vm boxes
+    #
+
+{% if cookiecutter.dependency_management_mode == 'public_third_parties' %}
+    vm_boxes = {
+        "xenial_build" => {
+            "box" => "ubuntu/xenial64"
+        },
+        "xenial_sys_test" => {
+            "box" => "ubuntu/xenial64"
+        }
+    }
+{% elif cookiecutter.dependency_management_mode == 'managed_in_house' %}
+    vm_boxes = {
+        "trusty_build" => {
+            "box" => "sysops-trusty-base-amd64-pydev-20160226.box",
+            "box_url" => "https://sysops.wpc.edgecastcdn.net/00AC7B/apt/vagrant/trusty/sysops-trusty-base-amd64-pydev-20160226.box"
+        },
+        "trusty_sys_test" => {
+            "box" => "trusty-server-cloudimg-amd64-vagrant-disk1.box",
+            "box_url" => "http://sysops.wpc.edgecastcdn.net/00AC7B/apt/mirror/vagrant/trusty/trusty-server-cloudimg-amd64-vagrant-disk1.box"
+        }
+    }
+{% else %}
+WARNING BAD TEMPLATE VALUE for cookiecutter.dependency_management_mode
+{% endif %}
+
+    # set some default behaviors
+    config.vm.box_check_update = true
+    config.vm.network "forwarded_port", guest: 22, host: rand(30000) + 1234
+
+    #
+    # Configure virtualbox provider settings
+    #
+
+    config.vm.provider "virtualbox" do |v|
+        # speed up dns
+        v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+        v.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+    end
+
+
+    #
+    # Decide which python environments to provision
+    #
+{% if cookiecutter.python_version_mode == 'py27_only' %}
+    python_environments = "py27"
+    default_python_environment = "py27"
+{% elif cookiecutter.python_version_mode == 'py27_thru_py3' %}
+    python_environments = "py27,py34,py35"
+    default_python_environment = "py34"
+{% elif cookiecutter.python_version_mode == 'py3_only' %}
+    python_environments = "py34,py35"
+    default_python_environment = "py34"
+{% else %}
+WARNING BAD TEMPLATE VALUE for cookiecutter.python_version_mode
+{% endif %}
+
+    #
+    # VMs for cleanroom default tox builds and tox driven tests
+    #
+
+    config.vm.define "build_vm", primary: false, autostart: false do |the_box|
+        # Specify the base box
+{% if cookiecutter.dependency_management_mode == 'public_third_parties' %}
+        the_box.vm.box = vm_boxes['xenial_build']['box']
+{% elif cookiecutter.dependency_management_mode == 'managed_in_house' %}
+        the_box.vm.box = vm_boxes['trusty_build']['box']
+        the_box.vm.box_url = vm_boxes['trusty_build']['box_url']
+{% else %}
+WARNING BAD TEMPLATE VALUE for cookiecutter.dependency_management_mode
+{% endif %}
+
+        # Run the basic provisioning script(s)
+                the_box.vm.provision "shell", privileged: true, inline: "sudo apt-get update"
+        the_box.vm.provision "shell", privileged: true, path: "vagrant/install-basic-python.sh", args: ["#{python_environments}"]
+        the_box.vm.provision "shell", privileged: true, path: "vagrant/provision-build-vm.sh"
+
+        # Setup the cleanroom copy of the repo
+        the_box.vm.provision "shell", privileged: false, path: "vagrant/make-cleanroom-copy-of-repo.sh", args: ["/vagrant", "/home/${USER}/cleanroom"]
+
+    end
+
+    #
+    # VMs for running system tests
+    #
+
+    # This is a barebones production-similar vm that does *not* have the build tools installed on it.
+    # You should use the wheel built outside this vm as the guinea pig and orchestrate the test run as per your needs.
+
+    config.vm.define "sys_test_vm", primary: false, autostart: false do |the_box|
+        # Specify the base box
+{% if cookiecutter.dependency_management_mode == 'public_third_parties' %}
+        the_box.vm.box = vm_boxes['xenial_sys_test']['box']
+{% elif cookiecutter.dependency_management_mode == 'managed_in_house' %}
+        the_box.vm.box = vm_boxes['trusty_sys_test']['box']
+        the_box.vm.box_url = vm_boxes['trusty_sys_test']['box_url']
+{% else %}
+WARNING BAD TEMPLATE VALUE for cookiecutter.dependency_management_mode
+{% endif %}
+
+{% if cookiecutter.project_flavor == 'flask_app' %}
+        # Map nginx port to host machine port
+        the_box.vm.network "forwarded_port", guest: 80, host: 8080
+{% endif %}
+
+        # Run the basic provisioning script(s)
+        the_box.vm.provision "shell", privileged: true, inline: "sudo apt-get update"
+        the_box.vm.provision "shell", privileged: true, path: "vagrant/install-basic-python.sh", args: ["#{default_python_environment}"]
+        the_box.vm.provision "shell", privileged: true, path: "vagrant/provision-sys-test-vm.sh", args: ["#{default_python_environment}"]
+    end
+
+end

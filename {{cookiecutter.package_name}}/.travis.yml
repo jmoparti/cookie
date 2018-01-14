@@ -1,0 +1,53 @@
+{% if cookiecutter.dependency_management_mode == 'managed_in_house' %}
+#
+# General notes 
+#
+# * This is loosely based on the docs in https://git.edgecastcdn.net/SysOps/sysops-release-tools
+# * This config uses "deb1404" by default as the lowest common demoninator.  If you want to use
+#   Xenial, then use "deb1604" as the "language" value in the config below.
+# * Note that all Python interpreters are NOT available from stock deb repos on both Xenial and Trusty.
+#   Please see https://pages.git.edgecastcdn.net/sysops-docs/sysops-pydev-docs/practices/which-python.html
+#   for the whole story.
+#
+{% set wheel_file_pattern = [cookiecutter.package_name|replace('-', '_'), '*.whl']|join('') %}
+language: deb1404
+env:
+  {% if cookiecutter.python_version_mode in ['py27_only'] -%}
+  - TOXENV=py27 DEFAULT_PY_ENV=py27
+  {% elif cookiecutter.python_version_mode in ['py27_thru_py3'] -%}
+  - TOXENV="py27,py34" DEFAULT_PY_ENV=py34
+  {% elif cookiecutter.python_version_mode in ['py3_only'] -%}
+  - TOXENV=py34 DEFAULT_PY_ENV=py34
+  {% endif %}
+install:
+  - "sudo apt-get update"
+  - "sudo vagrant/install-basic-python.sh ${TOXENV}"
+  - "sudo pip install tox"
+script:
+  - "make TOXENV=${TOXENV} DEFAULT_PY_ENV=${DEFAULT_PY_ENV} all"
+deploy:
+  skip_cleanup: true
+  provider: script
+  script: /opt/sysops-release-tools/upload-python-wheel dist/{{ wheel_file_pattern }}
+  on:
+    tags: true
+{% elif cookiecutter.dependency_management_mode == 'public_third_parties' %}
+language: python
+matrix:
+  include:
+  {% if cookiecutter.python_version_mode in ['py27_only', 'py27_thru_py3'] -%}
+  - python: "2.7"
+    env: TOXENV=py27
+  {% endif %}
+  {% if cookiecutter.python_version_mode in ['py27_thru_py3', 'py3_only'] -%}
+  - python: "3.4"
+    env: TOXENV=py34
+  {% endif %}
+install:
+  - "sudo pip install tox"
+script:
+  - "make TOXENV=${TOXENV} DEFAULT_PY_ENV=${TOXENV} all"
+{% else %}
+COOKIECUTTER TEMPLATE DOESN'T SUPPORT THIS OPTION HERE:
+  {{ cookiecutter.dependency_management_mode}} .. DANGER WILL ROBINSON!!!
+{% endif -%}

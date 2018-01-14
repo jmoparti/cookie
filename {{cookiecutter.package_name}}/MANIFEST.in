@@ -1,0 +1,17 @@
+#
+# NOTE:
+# Using a manifest.in file is NOT the only way to make sure data files get packaged
+# in your Python package.  It just happens to be lowest common denominator
+# amongst the options in the Python setuptools toolchain.
+# Feel free to remove this file in your own projects, and/or pick other approaches.
+# See the Python Packaging Authority page for further reading on this general topic:
+# https://packaging.python.org/distributing/
+
+include CONTRIBUTING.rst
+include DESCRIPTION.rst
+include VERSION
+
+# NOTE:
+# This is brute force, but works for the skeleton projects in the cookiecutter.
+# Vary it as you need for your own project.
+recursive-include {{cookiecutter.root_module_name}} *

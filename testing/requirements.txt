@@ -1,0 +1,13 @@
+cookiecutter==1.6.0
+devpi-common==3.1.0
+enum34==1.1.6
+pytest==3.0.4
+pytest-html==1.11.0
+pytest-profiling==1.2.2
+pytest-xdist==1.15.0
+pylint==1.6.4
+marshmallow==2.12.2
+ruamel.yaml==0.15.34
+shutilwhich==1.1.0
+testfixtures==4.13.5
+tox==2.3.1

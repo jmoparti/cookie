@@ -1,0 +1,33 @@
+---
+
+#
+# WARNING:
+# This playbook assumes whatever box you point this at is supposed to be a dev sandbox
+# this allows us to reuse this playbook across vagrant/openstack etc.
+#
+
+- hosts: '*'
+  vars:
+    remote_user_name: "vagrant"
+  tasks:
+    - name: test connection
+      ping:
+    - name: Make the destination directory for the transfer of "src" files to cleanroom directory on sandbox VM
+      file:
+        path: "/home/{{ remote_user_name }}/cleanroom/src"
+        state: directory
+    - name: Transfer "src" files to cleanroom directory on sandbox VM
+      synchronize:
+        src: "../../../"
+        dest: "/home/{{ remote_user_name }}/cleanroom/src"
+        delete: yes
+        recursive: true
+        rsync_opts:
+          - '--exclude=testing/ansible*'
+          - '--exclude=testing/output'
+          - '--exclude=testing/.virtualenv_ansible'
+          - '--exclude=testing/.virtualenv'
+          - '--exclude=.idea'
+          - '--exclude=.git'
+          - '--exclude=testing/.vagrant'
+          - '--exclude=testing/terraform*'
